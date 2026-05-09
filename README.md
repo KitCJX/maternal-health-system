@@ -1,159 +1,244 @@
-# Turborepo starter
+# Maternal & Child Health System
+### อาริฟ คลินิก — Arif Clinic
 
-This Turborepo starter is maintained by the Turborepo core team.
+A full-stack digital health system that replaces the paper **Maternal and Child Health Handbook (สมุดสุขภาพแม่และเด็ก พ.ศ. 2568)** with a multi-platform app.
 
-## Using this example
+---
 
-Run the following command:
+## Platforms
 
-```sh
-npx create-turbo@latest
+| Platform | Tech | Who Uses It |
+|---|---|---|
+| LINE OA + LIFF | LINE Messaging API | Patients |
+| Mobile App | Flutter (iOS + Android) | Patients |
+| Web Portal | Next.js 15 | Clinic Staff |
+| REST API | Node.js + Hono | All |
+
+---
+
+## Monorepo Structure
+
+```
+arif-clinic/
+├── apps/
+│   ├── api/          # Hono REST API (Node.js + TypeScript)
+│   ├── web/          # Next.js staff portal + LIFF
+│   └── mobile/       # Flutter iOS/Android (coming soon)
+├── packages/
+│   ├── db/           # Drizzle ORM schema + migrations
+│   ├── types/        # Shared TypeScript types
+│   ├── ui/           # Shared React components
+│   └── ...           # eslint-config, typescript-config
 ```
 
-## What's inside?
+---
 
-This Turborepo includes the following packages/apps:
+## Prerequisites
 
-### Apps and Packages
+- **Node.js** 20+
+- **npm** 10+
+- **PostgreSQL** 16 (or a free [Railway](https://railway.app) database)
+- **Flutter** 3.x (for mobile, later)
 
-- `docs`: a [Next.js](https://nextjs.org/) app
-- `web`: another [Next.js](https://nextjs.org/) app
-- `@repo/ui`: a stub React component library shared by both `web` and `docs` applications
-- `@repo/eslint-config`: `eslint` configurations (includes `eslint-config-next` and `eslint-config-prettier`)
-- `@repo/typescript-config`: `tsconfig.json`s used throughout the monorepo
+---
 
-Each package/app is 100% [TypeScript](https://www.typescriptlang.org/).
+## Setup
 
-### Utilities
+### 1. Clone and install
 
-This Turborepo has some additional tools already setup for you:
-
-- [TypeScript](https://www.typescriptlang.org/) for static type checking
-- [ESLint](https://eslint.org/) for code linting
-- [Prettier](https://prettier.io) for code formatting
-
-### Build
-
-To build all apps and packages, run the following command:
-
-With [global `turbo`](https://turborepo.dev/docs/getting-started/installation#global-installation) installed (recommended):
-
-```sh
-cd my-turborepo
-turbo build
+```bash
+git clone https://github.com/KitCJX/maternal-health-system.git
+cd maternal-health-system
+npm install
 ```
 
-Without global `turbo`, use your package manager:
+### 2. Configure environment
 
-```sh
-cd my-turborepo
-npx turbo build
-npm dlx turbo build
-npm exec turbo build
+```bash
+cp .env.example .env
 ```
 
-You can build a specific package by using a [filter](https://turborepo.dev/docs/crafting-your-repository/running-tasks#using-filters):
+Open `.env` and fill in:
+- `DATABASE_URL` — your PostgreSQL connection string from Railway
+- `JWT_SECRET` — any long random string (e.g. `openssl rand -base64 32`)
+- `LINE_*` — from [LINE Developers Console](https://developers.line.biz) (can leave blank for now)
 
-With [global `turbo`](https://turborepo.dev/docs/getting-started/installation#global-installation) installed:
+### 3. Run database migrations
 
-```sh
-turbo build --filter=docs
+```bash
+cd packages/db
+npm run db:push      # pushes schema to your database
 ```
 
-Without global `turbo`:
+### 4. Start development servers
 
-```sh
-npx turbo build --filter=docs
-npm exec turbo build --filter=docs
-npm exec turbo build --filter=docs
+```bash
+# From repo root — starts API + Web in parallel
+npm run dev
 ```
 
-### Develop
+- API → http://localhost:8080
+- Web → http://localhost:3000
+- Health check → http://localhost:8080/health
 
-To develop all apps and packages, run the following command:
+---
 
-With [global `turbo`](https://turborepo.dev/docs/getting-started/installation#global-installation) installed (recommended):
+## What's Built So Far (Phase 0 — partial)
 
-```sh
-cd my-turborepo
-turbo dev
+- [x] Turborepo monorepo scaffold
+- [x] Hono API with CORS + health check (`apps/api`)
+- [x] Complete database schema — 21 tables covering all handbook modules (`packages/db/src/schema.ts`)
+- [x] Shared types package (`packages/types`)
+
+---
+
+## What to Build Next
+
+### Phase 0 — Finish Foundation
+
+> Complete these before moving to Phase 1. Both teacher and student work on these together.
+
+**Backend (`apps/api`)**
+- [ ] Set up Drizzle migrations and push schema to Railway PostgreSQL
+- [ ] `POST /auth/register` — staff registration (name, email, password, role)
+- [ ] `POST /auth/login` — returns JWT
+- [ ] `GET /auth/me` — returns current user from JWT
+- [ ] Auth middleware — validates JWT on protected routes
+- [ ] LINE Login callback endpoint — links LINE uid to patient account
+
+**Web (`apps/web`)**
+- [ ] Install shadcn/ui + Tailwind (`npx shadcn@latest init`)
+- [ ] Login page (`/login`) — email + password form
+- [ ] Protected layout — redirects to `/login` if no JWT
+- [ ] Basic dashboard shell — sidebar, header, empty content area
+
+**DevOps**
+- [ ] Deploy API to Railway (free tier)
+- [ ] Deploy Web to Vercel (free)
+- [ ] GitHub Actions CI — runs `tsc` + `eslint` on every push
+
+**Academic deliverable:** ER diagram + OpenAPI spec
+
+---
+
+### Phase 1 — Patient & Pregnancy Core
+
+> After Phase 0 auth is working.
+
+**Backend**
+- [ ] `POST /patients` — register patient (HN, name, DOB, ID card, phone)
+- [ ] `GET /patients` — list all patients (paginated, searchable by HN/name)
+- [ ] `GET /patients/:id` — patient detail with active pregnancy
+- [ ] `POST /patients/:id/pregnancies` — register pregnancy (LMP → auto-calc EDD, GA)
+- [ ] `POST /pregnancies/:id/visits` — record antenatal visit (BP, weight, FHR, GA, notes)
+- [ ] `POST /pregnancies/:id/risks` — save 27-factor risk assessment (R01–R27)
+
+**Web**
+- [ ] Patient list page — table with HN, name, EDD, risk flags
+- [ ] Patient registration form
+- [ ] Pregnancy detail page — visit history timeline
+- [ ] Antenatal visit form — BP, weight, FHR, gestational age, notes
+- [ ] Risk assessment form — 27 checkboxes + notes (1st visit only)
+
+**LINE / Patient side**
+- [ ] LIFF page: patient can view their own pregnancy record
+- [ ] LIFF page: upcoming appointment card
+
+**Academic deliverable:** REST API design doc, tested Postman collection
+
+---
+
+### Phase 2 — Lab & Screening (Week 6–7)
+
+- Lab results: CBC, blood type, HIV, HBsAg, VDRL, rubella
+- GDM screening: 50g GCT / 75g OGTT / 100g OGTT
+- Ultrasound records + image upload (Cloudflare R2)
+- Maternal vaccines: Tdap/aP, dT with lot/expiry tracking
+- Auto-flag abnormal results
+
+---
+
+### Phase 3 — Growth Charts (Week 8–9)
+
+- Weight gain charts (4 BMI categories, handbook curves)
+- Child growth charts (weight-for-age, height-for-age, WHO z-scores)
+- Recharts on web, fl_chart on Flutter
+
+---
+
+### Phase 4 — Vaccinations (Week 10–11)
+
+- EPI vaccination schedule (Thailand MoPH)
+- Vaccination record with lot/expiry
+- Missed vaccine alerts via LINE
+
+---
+
+### Phase 5 — Developmental Screening (Week 12–13)
+
+- DSPM at 9 / 18 / 30 / 42 / 60 months
+- DAIM for high-risk infants (birth weight < 2500g, hypoxia)
+- Result classification + referral flags
+
+---
+
+### Phase 6 — Mental Health & Screening (Week 14–15)
+
+- EPDS postnatal depression screening (10 questions, score ≥ 13 = risk)
+- Alcohol use screening
+- Dental records (pregnancy + child)
+
+---
+
+### Phase 7 — Notifications & Appointments (Week 16–17)
+
+- Appointment scheduling
+- LINE push notifications (appointment reminders, abnormal results)
+- Rich menu setup in LINE OA
+
+---
+
+### Phase 8 — Patient Education Content (Week 18–19)
+
+- Kick count diary (patient-entered, 3× daily)
+- Emergency first aid guide (offline in Flutter)
+- Breastfeeding + nutrition guides
+
+---
+
+### Phase 9 — PDPA & Production Hardening (Week 20–22)
+
+- Consent management (patient consent before data collection)
+- Audit log on all PHI access
+- Data export / deletion rights
+- Security review, penetration test
+- Deploy to Thai cloud (NIPA Cloud) if needed for compliance
+
+---
+
+## Branch Strategy
+
+```
+main                  ← stable, always deployable
+├── phase/0-auth      ← teacher works here first
+├── feature/patient-registration
+├── feature/antenatal-visits
+└── ...
 ```
 
-Without global `turbo`, use your package manager:
+Students fork the repo, create a branch, and open a PR against `main`.
 
-```sh
-cd my-turborepo
-npx turbo dev
-npm exec turbo dev
-npm exec turbo dev
-```
+---
 
-You can develop a specific package by using a [filter](https://turborepo.dev/docs/crafting-your-repository/running-tasks#using-filters):
+## Tech Stack Reference
 
-With [global `turbo`](https://turborepo.dev/docs/getting-started/installation#global-installation) installed:
-
-```sh
-turbo dev --filter=web
-```
-
-Without global `turbo`:
-
-```sh
-npx turbo dev --filter=web
-npm exec turbo dev --filter=web
-npm exec turbo dev --filter=web
-```
-
-### Remote Caching
-
-> [!TIP]
-> Vercel Remote Cache is free for all plans. Get started today at [vercel.com](https://vercel.com/signup?utm_source=remote-cache-sdk&utm_campaign=free_remote_cache).
-
-Turborepo can use a technique known as [Remote Caching](https://turborepo.dev/docs/core-concepts/remote-caching) to share cache artifacts across machines, enabling you to share build caches with your team and CI/CD pipelines.
-
-By default, Turborepo will cache locally. To enable Remote Caching you will need an account with Vercel. If you don't have an account you can [create one](https://vercel.com/signup?utm_source=turborepo-examples), then enter the following commands:
-
-With [global `turbo`](https://turborepo.dev/docs/getting-started/installation#global-installation) installed (recommended):
-
-```sh
-cd my-turborepo
-turbo login
-```
-
-Without global `turbo`, use your package manager:
-
-```sh
-cd my-turborepo
-npx turbo login
-npm exec turbo login
-npm exec turbo login
-```
-
-This will authenticate the Turborepo CLI with your [Vercel account](https://vercel.com/docs/concepts/personal-accounts/overview).
-
-Next, you can link your Turborepo to your Remote Cache by running the following command from the root of your Turborepo:
-
-With [global `turbo`](https://turborepo.dev/docs/getting-started/installation#global-installation) installed:
-
-```sh
-turbo link
-```
-
-Without global `turbo`:
-
-```sh
-npx turbo link
-npm exec turbo link
-npm exec turbo link
-```
-
-## Useful Links
-
-Learn more about the power of Turborepo:
-
-- [Tasks](https://turborepo.dev/docs/crafting-your-repository/running-tasks)
-- [Caching](https://turborepo.dev/docs/crafting-your-repository/caching)
-- [Remote Caching](https://turborepo.dev/docs/core-concepts/remote-caching)
-- [Filtering](https://turborepo.dev/docs/crafting-your-repository/running-tasks#using-filters)
-- [Configuration Options](https://turborepo.dev/docs/reference/configuration)
-- [CLI Usage](https://turborepo.dev/docs/reference/command-line-reference)
+| Layer | Technology |
+|---|---|
+| API | Node.js + TypeScript + [Hono](https://hono.dev) |
+| ORM | [Drizzle ORM](https://orm.drizzle.team) |
+| Web | [Next.js 15](https://nextjs.org) App Router + [shadcn/ui](https://ui.shadcn.com) |
+| Mobile | Flutter 3.x + Riverpod |
+| Database | PostgreSQL 16 ([Railway](https://railway.app)) |
+| File Storage | Cloudflare R2 |
+| Auth | JWT + LINE Login OAuth 2.0 |
+| LINE | Messaging API + LIFF |
